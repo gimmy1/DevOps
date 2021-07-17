@@ -1,0 +1,14 @@
+[
+    {
+        "ParameterKey": "myVPC",
+        "ParameterValue": "Please Place Default VPC Value"
+    },
+    {
+        "ParameterKey": "PublicSubnet",
+        "ParameterValue": "Please Place Public Subnet Value"
+    },
+    {
+        "ParameterKey": "AMItoUse",
+        "ParameterValue": "Choose ANY EC2 AMI to use"
+    }
+]

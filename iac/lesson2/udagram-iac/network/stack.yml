@@ -1,0 +1,158 @@
+Description:
+  Infrastructure as Code using CloudFormation.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resources
+    Type: String
+  
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this
+    Type: String
+    Default: 10.0.0.0/16
+  
+  PublicSubnet1CIDR:
+      Description: Please enter the IP range(CIDR notation) for this
+      Type: String
+      Default: 10.0.0.0/18
+    
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range(CIDR notation) for this
+    Type: String
+    Default: 10.0.64.0/18
+  
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range(CIDR notation) for this
+    Type: String
+    Default: 10.0.128.0/18
+  
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range(CIDR notation) for this
+    Type: String
+    Default: 10.0.192.0/18
+
+  
+Resources:
+  # A Virtual Private Cloud is a virtual network dedicated to a AWS account.
+  # You can launch AWS resources: EC2. 
+  # VPC's have a range of IPv4 addresses for the VPC. in the form of a
+  # They are referred to as Classless Inter-Domain Routing (CIDR) block; for example, 10.0.0.0/16.
+  # This is the primary CIDR block for your VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Ref EnvironmentName
+    
+  # Gateway for connecting VPC to internet
+  # Provides a target in a VPC route tables for internet-routable traffic,
+  # and performs network address translation (NAT) for instances that have
+  # been assigned public IPv4 addresses
+  InternetGateway:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+          Tags:
+              - Key: Name
+                Value: !Ref EnvironmentName
+
+  # Enables connectivity between the internet and the VPC.
+  # Attaches an internet gateway, or a virtual private gateway to a VPC.
+  InternetGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+          InternetGatewayId: !Ref InternetGateway
+          VpcId: !Ref VPC
+      
+  # A VPC spans all of the Availability Zones in the Region. After creating a VPC,
+  # you can add one or more subnets in each Availability Zone
+
+  # When you create a subnet, you specify the CIDR block for the subnet, which is a subset
+  # of the VPC CIDR block. Each subnet must reside entirely within one Availability Zone
+  # and cannot span zones
+
+  # An availability zone is a logical data center in a region available
+  # for use by any AWS customer. Each zone in a region has redundant 
+  # and separate power, networking and connectivity to reduce the likelihood 
+  # of two zones failing simultaneously. A common misconception 
+  # is that a single zone equals a single data center
+  
+  # Availability Zone
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ''] 
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+  
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC 
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+  
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+    
+  # Enables instances in a private subnet to connect to the internet or other AWS services,
+  # but prevent the internet from initiating connections with the instances. A NAT device forwards
+  # traffic from the instances in the private subnet to the internet or other AWS services,
+  # and then sends the response back to the instances. When traffic goes to the internet, the source
+  # IPv4 address is replaced with the NAT device’s address and similarly, when the response traffic
+  # goes to those instances, the NAT device translates the address back to those instances’ private
+  # IPv4 addresses
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+  
+  
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+  
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway2EIP.AllocationId
+      SubnetId: !Ref PublicSubnet2

@@ -1,4 +1,4 @@
-STACK_NAME=udagram-network
+STACK_NAME=udagram-servers
 REGION=us-east-1
 
 echo "Deleting network..."

@@ -250,8 +250,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PrivateRouteTable2
       SubnetId: !Ref PrivateSubnet2
-    
-  
+
 Outputs:
   VPC:
     Description: VPC reference
@@ -265,19 +264,7 @@ Outputs:
     Export:
       Name: !Sub ${EnvironmentName}-PublicSubnetIDs
 
-  PublicSubnet1:
-    Description: A reference to the public subnet in the 1st Availability Zone
-    Value: !Ref PublicSubnet1
-    Export:
-      Name: !Sub ${EnvironmentName}-PS1
-
-  PublicSubnet2:
-    Description: A reference to the public subnet in the 2nd Availability Zone
-    Value: !Ref PublicSubnet2
-    Export:
-      Name: !Sub ${EnvironmentName}-PS2
-  
-      PublicSubnet1CIDR:
+  PublicSubnet1CIDR:
     Description: Public Subnet 1 CIDR
     Value: !Ref PublicSubnet1CIDR
     Export:
